@@ -6,6 +6,10 @@ taskspending = db.taskspending
 with open('/path/to/file') as f:
   content = [ x.strip('\n') for x in f.readlines() ]
 
+backup_cmd = ''
+
+resetids_cmd ='mongoclient --getids' # should add '> /path/to/file' or this won't do anything
+
 '''
 
 The rest below is for the JSON-LD examples.
