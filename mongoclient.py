@@ -89,8 +89,6 @@ not_project_or_context_tests = taskspending_applyfilter(config.content, not_proj
 with not_project_or_context_tests as s:
   not_project_or_context_test_ids = [ str(x['_id']) for x in s ]
 
-#output = config.taskspending.find({"_id": {"$in": subsubtask_ids}})
-
 output = taskspending_applyfilter(not_project_or_context_test_ids)
 
 compacted = jsonld.compact(config.doc, config.context)
@@ -123,7 +121,7 @@ normalized = jsonld.normalize(config.doc, {'algorithm': 'URDNA2015', 'format': '
 #print "normalized"
 #print normalized
 
-allaccounted = all.count() == fromfile.count() == 3236
+allaccounted = all.count() == fromfile.count()
 if allaccounted or parser.parse_args().getids:
   print("total with jsonld context:", has_jsonld.count())
   print("total without jsonld context:", no_jsonld)
