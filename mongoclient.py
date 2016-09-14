@@ -4,41 +4,57 @@ import json
 
 import config
 
-all = config.taskspending.find({})
-fromfile = config.taskspending.find({"_id": {"$in": config.content}})
+def taskspending_applyfilter(ids=None, query=None, excluding_ids=None):
+  if excluding_ids:
+    return config.taskspending.find({"$and": [{"_id": {"$nin": excluding_ids}}, {"$or":
+      query
+    }]})
+  if query and ids:
+    return config.taskspending.find({"$and": [{"_id": {"$in": ids}}, {"$or":
+      query
+    }]})
+  elif ids:
+    return config.taskspending.find({"_id": {"$in": ids}})
+  elif not ids:
+    return config.taskspending.find({})
+  else:
+    print "error: something missing"
 
-wjsonld = config.taskspending.find({"$and": [{"_id": {"$in": config.content}}, {"$or": [
-  {"__context": {"$exists": 1}},
-]}]})
+all = taskspending_applyfilter()
+fromfile = taskspending_applyfilter(config.content)
 
-not_jsonld = all.count() - wjsonld.count()
+hascontext_query = [
+  {"__context": {"$exists": 1}}
+]
 
-subtasks = config.taskspending.find({"$and": [{"_id": {"$in": config.content}}, {"$or": [ 
+hascontext = taskspending_applyfilter(config.content, hascontext_query)
+
+not_jsonld = all.count() - hascontext.count()
+
+projects_and_contexts_query = [
   {"type": "project"},
   {"tags": "largeroutcome"},
   {"type": "context"},
   {"tags": "largercontext"},
-]}]})
+]
 
-with subtasks as s:
-  subtask_ids = [ str(x['_id']) for x in s ]
+projects_and_contexts = taskspending_applyfilter(config.content, projects_and_contexts_query)
 
-subsubtasks = config.taskspending.find({"$and": [{"_id": {"$nin": subtask_ids}}, {"$or": [
+with projects_and_contexts as s:
+  project_and_context_ids = [ str(x['_id']) for x in s ]
+
+not_project_or_context_test_query = [
   {"description": "test"},
-]}]})
+]
 
-with subsubtasks as s:
-  subsubtask_ids = [ str(x['_id']) for x in s ]
+not_project_or_context_tests = taskspending_applyfilter(config.content, not_project_or_context_test_query, project_and_context_ids)
 
-output = config.taskspending.find({"_id": {"$in": subsubtask_ids}})
+with not_project_or_context_tests as s:
+  not_project_or_context_test_ids = [ str(x['_id']) for x in s ]
 
-#TODO: turn this into a function
-newcursor = config.taskspending.find({"$and": [{"_id": {"$in": config.content}}, {"$or": 
-  config.dict
-}]})
+#output = config.taskspending.find({"_id": {"$in": subsubtask_ids}})
 
-print "newcursor count:", newcursor.count()
-print "subtasks count:", subtasks.count()
+output = taskspending_applyfilter(not_project_or_context_test_ids)
 
 compacted = jsonld.compact(config.doc, config.context)
 
@@ -72,8 +88,8 @@ normalized = jsonld.normalize(config.doc, {'algorithm': 'URDNA2015', 'format': '
 
 allaccounted = all.count() == fromfile.count() == 2043
 if allaccounted:
-  print "wjsonld total:", wjsonld.count()
-  print "not jsonld total:", not_jsonld
+  print "total with jsonld context:", hascontext.count()
+  print "total without jsonld context:", not_jsonld
   print "output total:", output.count()
   for op in output:
     print json.dumps(op, indent=8, sort_keys=True)

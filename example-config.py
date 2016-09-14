@@ -6,7 +6,11 @@ taskspending = db.taskspending
 with open('/path/to/file') as f:
   content = [ x.strip('\n') for x in f.readlines() ]
 
-dict = [{"name": "alice"}, {"occupation": "revolutionary"}, {"name": "bob"}, {"occupation": "programmer"}]
+'''
+
+The rest below is for the JSON-LD examples.
+
+'''
 
 doc = {
     "http://schema.org/name": "Manu Sporny",
